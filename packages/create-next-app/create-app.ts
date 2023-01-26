@@ -38,6 +38,7 @@ export async function createApp({
   experimentalApp,
   srcDir,
   importAlias,
+  initGitRepository,
 }: {
   appPath: string
   packageManager: PackageManager
@@ -48,6 +49,7 @@ export async function createApp({
   experimentalApp: boolean
   srcDir: boolean
   importAlias: string
+  initGitRepository: boolean
 }): Promise<void> {
   let repoInfo: RepoInfo | undefined
   const mode: TemplateMode = typescript ? 'ts' : 'js'
@@ -228,7 +230,7 @@ export async function createApp({
     })
   }
 
-  if (tryGitInit(root)) {
+  if (initGitRepository && tryGitInit(root)) {
     console.log('Initialized a git repository.')
     console.log()
   }

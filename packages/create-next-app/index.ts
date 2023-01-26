@@ -120,6 +120,13 @@ const program = new Commander.Command(packageJson.name)
   Explicitly tell the CLI to reset any stored preferences
 `
   )
+  .option(
+    '--skip-git',
+    `
+
+  Skip initializing a git repository
+`
+  )
   .allowUnknownOption()
   .parse(process.argv)
 
@@ -223,6 +230,7 @@ async function run(): Promise<void> {
       typescript: true,
       eslint: true,
       srcDir: false,
+      initGitRepository: true,
       importAlias: '@/*',
     }
     const getPrefOrDefault = (field: string) => {
@@ -358,6 +366,27 @@ async function run(): Promise<void> {
         preferences.importAlias = importAlias
       }
     }
+
+    if (process.argv.includes('--skip-git')) {
+      program.initGitRepository = false
+    } else {
+      if (ciInfo.isCI) {
+        program.initGitRepository = false
+      } else {
+        const styledGitRepository = chalk.hex('#007acc')('Git repository')
+        const { initGitRepository } = await prompts({
+          onState: onPromptState,
+          type: 'toggle',
+          name: 'initGitRepository',
+          message: `Would you like us to initialize a new ${styledGitRepository} for this project?`,
+          initial: getPrefOrDefault('initGitRepository'),
+          active: 'Yes',
+          inactive: 'No',
+        })
+        program.initGitRepository = Boolean(initGitRepository)
+        preferences.initGitRepository = Boolean(initGitRepository)
+      }
+    }
   }
 
   try {
@@ -371,6 +400,7 @@ async function run(): Promise<void> {
       experimentalApp: program.experimentalApp,
       srcDir: program.srcDir,
       importAlias: program.importAlias,
+      initGitRepository: program.initGitRepository,
     })
   } catch (reason) {
     if (!(reason instanceof DownloadError)) {
@@ -398,6 +428,7 @@ async function run(): Promise<void> {
       experimentalApp: program.experimentalApp,
       srcDir: program.srcDir,
       importAlias: program.importAlias,
+      initGitRepository: program.initGitRepository,
     })
   }
   conf.set('preferences', preferences)
